@@ -1,0 +1,31 @@
+[project]
+name = "unvtray"
+description = "Unvanquished Tray"
+readme = "README.md"
+authors = [
+    {name = "Maximilian Stahlberg", email = "viech@unvanquished.net"},
+]
+keywords = ["unvanquished"]
+license = {file = "LICENSE.txt"}
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment :: First Person Shooters",
+    "Topic :: Games/Entertainment :: Real Time Strategy",
+]
+requires-python = ">=3.3"
+dependencies = ["pillow", "pystray"]
+dynamic = ["version"]
+
+[project.scripts]
+unvtray = "unvtray.__main__:run"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"unvtray.assets" = ["*.otf", "*.png"]
+
+[tool.black]
+line-length = 79
