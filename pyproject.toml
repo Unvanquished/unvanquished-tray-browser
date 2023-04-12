@@ -24,6 +24,8 @@ unvtray = "unvtray.__main__:run"
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools_scm]
+
 [tool.setuptools.package-data]
 "unvtray.assets" = ["*.otf", "*.png"]
 
