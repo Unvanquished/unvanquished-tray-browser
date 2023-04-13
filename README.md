@@ -63,7 +63,7 @@ Make sure `xdg-utils` are installed and that your distribution of Unvanquished
 comes with a `.desktop` file that describes the `unv://` URI scheme. For
 example, the [official
 updater](https://github.com/Unvanquished/updater/releases/) and the [official
-flatpack](https://flathub.org/apps/details/net.unvanquished.Unvanquished) (all
+flatpak](https://flathub.org/apps/details/net.unvanquished.Unvanquished) (all
 platforms) as well as the [AUR
 package](https://aur.archlinux.org/packages/unvanquished) (Arch Linux) should
 install a `.desktop` file alongside the game.
