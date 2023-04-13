@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.5
+Name=Unvanquished Tray
+Comment=Minimalistic Unvanquished server browser that runs in your system tray
+Icon=unvtray
+Terminal=false
+Type=Application
+Exec=unvtray
+StartupNotify=false
+Categories=Game;ActionGame;StrategyGame;Network;
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-phase=1
+X-KDE-autostart-after=panel
