@@ -40,6 +40,9 @@ R_GET_STATUS = PREFIX + b"statusResponse\n" + RECORD_SEP
 
 SOCKET_TIMEOUT = 1
 
+MAX_SERVER_NAME_CHARS = 60
+MAX_MAP_NAME_CHARS = 20
+
 
 def strip_colors(string):
     stripped = ""
@@ -91,11 +94,16 @@ class Server:
     def __eq__(self, other):
         return self._host == other._host and self._port == other._port
 
+    @staticmethod
+    def _limit_to(string, length):
+        return string if len(string) <= length else f"{string[:length-1]}…"
+
     def __str__(self):
         return (
             f"{self.num_playing}+{self.num_spectating}"
-            f" on {self.stripped_name}"
-            f" ({self.map_name}, {self.ping * 1000:.0f} ms)"
+            f" on {self._limit_to(self.stripped_name, MAX_SERVER_NAME_CHARS)}"
+            f" ({self._limit_to(self.map_name, MAX_MAP_NAME_CHARS)},"
+            f" {self.ping * 1000:.0f} ms)"
         )
 
     def refresh(self):
