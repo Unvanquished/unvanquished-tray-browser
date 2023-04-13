@@ -23,32 +23,72 @@ from pystray import Icon, Menu, MenuItem
 
 ASSET_DIR = Path(__file__).parent / "assets"
 
+HIGH_PLAYER_COUNT = 6
+
 
 @lru_cache()
-def make_icon(
+def _make_icon(
     text="",
-    color="gray",
-    text_color="white",
-    size=64,
-    text_scale=2 / 3,
+    *,
+    text_color="lightgray",
+    bg_color="#555",
+    border_color="#222",
+    text_size=2 / 3,
+    text_hori_margin=1 / 64,
+    text_vert_margin=-2 / 64,
+    border_width=1 / 64,
     icon_file=str(ASSET_DIR / "unvanquished.png"),
     font_file=str(ASSET_DIR / "FreeMonoBold.otf"),
 ):
-    s = size
-    th = int(text_scale * size)  # text height
     icon = Image.open(icon_file)
-    font = ImageFont.truetype(font_file, size=th)
-    tw = font.getlength(text)  # text width
-    canvas = ImageDraw.Draw(icon)
-    canvas.rectangle((s - tw, s - th, s, s), fill=color)
-    canvas.text(
-        (s - tw, s - th),
-        text,
-        align="right",
-        font=font,
-        fill=text_color,
-    )
+    assert icon.size[0] == icon.size[1], "Icon image must be square."
+
+    if text:
+        s = icon.size[0]
+        h = text_hori_margin * s
+        v = text_vert_margin * s
+        b = border_width * s
+        th = int(text_size * s)  # text height
+        font = ImageFont.truetype(font_file, size=th)
+        tw = font.getlength(text) + 2 * h  # text width
+
+        canvas = ImageDraw.Draw(icon)
+        canvas.rectangle(
+            (s - tw - 2 * b, s - th - 2 * v - 2 * b, s - 1, s - 1),
+            fill=border_color,
+        )
+        canvas.rectangle(
+            (s - tw - b, s - th - 2 * v - b, s - b - 1, s - b - 1),
+            fill=bg_color,
+        )
+        canvas.text(
+            (s - tw - b - 1 + h, s - th - b - v - 1),
+            text,
+            align="right",
+            font=font,
+            fill=text_color,
+        )
+
     return icon
+
+
+def make_icon(players=None):
+    icon_data = dict(text_color="#f9fcee")
+
+    if players is None:  # No data yet.
+        pass
+    elif players < 0:  # Disconnected.
+        icon_data["text"] = "?"
+        icon_data["bg_color"] = "darkred"
+    else:
+        icon_data["text"] = f"{players:d}"
+        icon_data["bg_color"] = "#233f47"  # dark teal
+
+        if players >= HIGH_PLAYER_COUNT:
+            icon_data["bg_color"] = "darkgreen"
+            icon_data["text_color"] = "#c7ffc7"
+
+    return _make_icon(**icon_data)
 
 
 def make_connect_action(server):
@@ -88,25 +128,41 @@ def make_menu(servers=None):
     return menu
 
 
-def make_tray(servers=None, *, player_threshold=6):
-    icon_data = dict(text_color="#e1e5d9")
-
+def make_tray(servers=None):
     if servers is None:
-        pass
+        icon = make_icon(None)
     elif not servers.online():
-        icon_data["text"] = "?"
-        icon_data["color"] = "darkred"
+        icon = make_icon(-1)
     else:
-        icon_data["text"] = f"{servers.max_playing:d}"
-        icon_data["color"] = "#233f47"  # dark teal
+        icon = make_icon(servers.max_playing)
 
-        if servers.max_playing >= player_threshold:
-            icon_data["text_color"] = "lightgreen"
-
-    tray = Icon(
-        name="Unvanquished Tray",
-        icon=make_icon(**icon_data),
-        menu=make_menu(servers),
-    )
+    tray = Icon(name="Unvanquished Tray", icon=icon, menu=make_menu(servers))
 
     return tray
+
+
+if __name__ == "__main__":
+    import sys
+
+    print("Updating the example icon.")
+
+    example_icon = make_icon(8)
+    example_icon.save("example.png")
+
+    if "--test" in sys.argv:
+        print("Saving icons for inspection.")
+
+        icon_initial = make_icon()
+        icon_initial.save("icon_initial.png")
+
+        icon_disconnect = make_icon(-1)
+        icon_disconnect.save("icon_disconnect.png")
+
+        icon_few = make_icon(0)
+        icon_few.save("icon_few.png")
+
+        icon_many = make_icon(HIGH_PLAYER_COUNT)
+        icon_many.save("icon_many.png")
+
+        icon_two_digits = make_icon(10)
+        icon_two_digits.save("icon_two_digits.png")
