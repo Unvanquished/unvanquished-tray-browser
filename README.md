@@ -93,3 +93,16 @@ for_window [class="daemon"] fullscreen
 
 A similar solution may improve fullscreen behavior also with other tiling
 window managers.
+
+## Code and asset licenses
+
+- The source code is licensed under [GPLv3 or later](LICENSE.txt).
+
+- The [included font](unvtray/assets/FreeMonoBold.otf) is unmodified from the
+  [GNU FreeFont family](https://www.gnu.org/software/freefont/) and is licensed
+  under [GPLv3 or later](LICENSE.txt).
+
+- The original [Unvanquished icon](unvtray/assets/unvanquished.png) and the
+  derived [example tray icon](example.png) are licensed under [CC BY-SA
+  2.5](https://creativecommons.org/licenses/by-sa/2.5/); you may attribute both
+  to "Unvanquished Development."
