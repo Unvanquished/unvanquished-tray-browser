@@ -16,6 +16,7 @@
 
 import logging
 import os
+import re
 from functools import wraps
 from itertools import islice
 from multiprocessing.pool import ThreadPool
@@ -52,6 +53,11 @@ def strip_colors(string):
         else:
             stripped += c
     return stripped
+
+
+def strip_emoticons(string):
+    """Removes emoticon tags and normalizes whitespace."""
+    return re.sub("\s*(\[.*?\]|\s)\s*", " ", string).strip()
 
 
 class Server:
@@ -201,7 +207,7 @@ class Server:
     @property
     def stripped_name(self):
         """Name of the server without color codes."""
-        return strip_colors(self.name)
+        return strip_emoticons(strip_colors(self.name))
 
     @property
     @_valid_or("unknown")
