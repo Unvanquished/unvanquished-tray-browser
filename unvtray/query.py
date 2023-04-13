@@ -132,14 +132,40 @@ class Ping:
 
 class Server:
     @staticmethod
-    def _valid_or(default=None):
+    def _valid_or(default=None, *, fallback=None):
+        """Return a default if the last request did not produce a valid config.
+
+        This decorates methods of :class:`Server`. The method will be executed
+        if and only if the last server refresh, if any, was successful: the
+        server must have provided a configuration that has passed initial
+        sanity checks. If the method is either not executed or is executed and
+        raises an exception, then the decorator returns the provided default
+        value. In the latter case, the exception is further logged. If the
+        method is successfully executed, then its return value is forwarded.
+
+        Instead of a constant default, a fallback method can be provided that
+        will be run instead of the (skipped or failed) decorated method and
+        whose return value is then forwarded. This fallback should not depend
+        on a valid configuration being provided by the server.
+        """
+        assert default is None or fallback is None
+
         def wrapper(method):
             @wraps(method)
             def wrapped(server, *args, **kwargs):
                 if server._config:
-                    return method(server, *args, **kwargs)
+                    # TODO: Add a finally clause to cache the value to be
+                    #       returned within _config?
+                    try:
+                        return method(server, *args, **kwargs)
+                    except Exception as error:
+                        logger.warn(
+                            f"Failed to obtain {method.__name__}"
+                            f" for {server.address}: {error}"
+                        )
+                        return fallback(server) if fallback else default
                 else:
-                    return default
+                    return fallback(server) if fallback else default
 
             return wrapped
 
@@ -272,7 +298,7 @@ class Server:
         return self._ping.mvavg
 
     @property
-    @_valid_or("unknown")
+    @_valid_or(fallback=lambda server: server.address)
     def name(self):
         """Name of the server as given."""
         assert self._config
@@ -293,13 +319,11 @@ class Server:
     @property
     @_valid_or((0,) * 5)
     def player_stats(self):
+        """Reports number of players (S/A/H) and bots (A/H) as five numbers."""
         assert self._config
 
-        try:
-            B = self._config["B"]
-            P = self._config["P"]
-        except KeyError as error:
-            raise RuntimeError("No bot/player status fields found.") from error
+        B = self._config["B"]
+        P = self._config["P"]
 
         if len(B) != len(P):
             raise RuntimeError("Lengths of bot and player states do not match.")
