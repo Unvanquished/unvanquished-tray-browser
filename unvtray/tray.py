@@ -51,11 +51,15 @@ def make_icon(
     return icon
 
 
-def connect_action(server):
+def make_connect_action(server):
     def connect():
         subprocess.call(["xdg-open", f"unv://{server.address}"])
 
     return connect
+
+
+def launch_action():
+    subprocess.call(["unvanquished"])
 
 
 def quit_action(icon):
@@ -72,11 +76,12 @@ def make_menu(servers=None):
 
     if servers:
         items.extend(
-            MenuItem(str(server), connect_action(server), default=not i)
+            MenuItem(str(server), make_connect_action(server), default=not i)
             for i, server in enumerate(servers.filter())
         )
+        items.append(Menu.SEPARATOR)
 
-    items.append(Menu.SEPARATOR)
+    items.append(MenuItem("Launch Unvanquished", launch_action))
     items.append(MenuItem("Quit", quit_action))
 
     menu = Menu(*items)
