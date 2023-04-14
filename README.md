@@ -1,6 +1,10 @@
 # Unvanquished Tray
 
-![tray icon](example.png)
+[![PyPI badge](https://img.shields.io/pypi/v/unvtray?label=PyPI&logo=pypi&logoColor=white)](https://pypi.org/project/unvtray/)
+
+<p align="center">
+  <img src="example.png" />
+</p>
 
 A minimalistic [Unvanquished](https://unvanquished.net/) server browser that
 runs in your system tray. The icon shows the player count of the most populated
