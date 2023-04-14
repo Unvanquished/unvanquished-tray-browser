@@ -33,7 +33,7 @@ def _make_icon(
     text_color="lightgray",
     bg_color="#555",
     border_color="#222",
-    text_size=2 / 3,
+    text_size=44 / 64,
     text_hori_margin=1 / 64,
     text_vert_margin=-2 / 64,
     border_width=1 / 64,
