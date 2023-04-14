@@ -1,6 +1,8 @@
 # Unvanquished Tray
 
-[![PyPI badge](https://img.shields.io/pypi/v/unvtray?label=PyPI&logo=pypi&logoColor=white)](https://pypi.org/project/unvtray/)
+[![PyPI badge](https://img.shields.io/pypi/v/unvtray?logo=pypi&label=PyPI&logoColor=white&color=blue)](https://pypi.org/project/unvtray/)
+[![AUR badge](https://img.shields.io/aur/version/unvtray?logo=arch-linux&label=AUR&logoColor=white)](https://aur.archlinux.org/packages/unvtray)
+[![black badge](https://img.shields.io/badge/code%20style-black-black?logo=python&logoColor=white)](https://github.com/psf/black)
 
 <p align="center">
   <img src="example.png" />
@@ -18,6 +20,12 @@ on a server will launch the game and connect to it.
 
 ```shell
 pip install --user unvtray
+```
+
+#### on Arch Linux
+
+```shell
+$YOUR_AUR_HELPER -S unvtray
 ```
 
 #### from source
