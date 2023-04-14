@@ -18,7 +18,7 @@ import time
 from sched import scheduler
 
 from . import tray
-from .query import ServerList
+from .servers import ServerList
 
 TRAY_WAKEUP_TIME = 0.2
 TRAY_REFRESH_TIME = 5
