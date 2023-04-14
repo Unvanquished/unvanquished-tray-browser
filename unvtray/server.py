@@ -33,26 +33,26 @@ MAX_SERVER_NAME_CHARS = 60
 MAX_MAP_NAME_CHARS = 20
 
 
-def strip_colors(string):
-    stripped = ""
-    chars = list(string)
-    while chars:
-        c = chars.pop(0)
-        if c == "^" and chars:
-            d = chars.pop(0)
-            if d == "#":
-                chars = chars[6:]
-        else:
-            stripped += c
-    return stripped
-
-
-def strip_emoticons(string):
-    """Removes emoticon tags and normalizes whitespace."""
-    return re.sub("\s*(\[.*?\]|\s)\s*", " ", string).strip()
-
-
 class Server:
+    @staticmethod
+    def strip_colors(string):
+        stripped = ""
+        chars = list(string)
+        while chars:
+            c = chars.pop(0)
+            if c == "^" and chars:
+                d = chars.pop(0)
+                if d == "#":
+                    chars = chars[6:]
+            else:
+                stripped += c
+        return stripped
+
+    @staticmethod
+    def strip_emoticons(string):
+        """Removes emoticon tags and normalizes whitespace."""
+        return re.sub(r"\s*(\[.*?\]|\s)\s*", " ", string).strip()
+
     @staticmethod
     def _valid_or(default=None, *, fallback=None):
         """Return a default if the last request did not produce a valid config.
@@ -229,7 +229,7 @@ class Server:
     @property
     def stripped_name(self):
         """Name of the server without color codes."""
-        return strip_emoticons(strip_colors(self.name))
+        return self.strip_emoticons(self.strip_colors(self.name))
 
     @property
     @_valid_or("unknown")
