@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License along with
 # this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import subprocess
 from functools import lru_cache
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 from pystray import Icon, Menu, MenuItem
+
+from .launch import launch
 
 ASSET_DIR = Path(__file__).parent / "assets"
 
@@ -93,13 +94,13 @@ def make_icon(players=None):
 
 def make_connect_action(server):
     def connect():
-        subprocess.call(["xdg-open", f"unv://{server.address}"])
+        launch(server)
 
     return connect
 
 
 def launch_action():
-    subprocess.call(["unvanquished"])
+    launch()
 
 
 def quit_action(icon):
@@ -139,30 +140,3 @@ def make_tray(servers=None):
     tray = Icon(name="Unvanquished Tray", icon=icon, menu=make_menu(servers))
 
     return tray
-
-
-if __name__ == "__main__":
-    import sys
-
-    print("Updating the example icon.")
-
-    example_icon = make_icon(8)
-    example_icon.save("example.png")
-
-    if "--test" in sys.argv:
-        print("Saving icons for inspection.")
-
-        icon_initial = make_icon()
-        icon_initial.save("icon_initial.png")
-
-        icon_disconnect = make_icon(-1)
-        icon_disconnect.save("icon_disconnect.png")
-
-        icon_few = make_icon(0)
-        icon_few.save("icon_few.png")
-
-        icon_many = make_icon(HIGH_PLAYER_COUNT)
-        icon_many.save("icon_many.png")
-
-        icon_two_digits = make_icon(10)
-        icon_two_digits.save("icon_two_digits.png")
