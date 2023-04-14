@@ -28,6 +28,82 @@ SERVER_RECORD_LEN = 7  # IPv4, port, separator
 Q_GET_SERVERS = QUERY_PREFIX + f"getservers {PROTOCOL}".encode("ascii")
 R_GET_SERVERS = QUERY_PREFIX + b"getserversResponse" + RECORD_SEP
 
+MAX_SERVERS_RECEIVED = 2**9
+DEFAULT_MAIN_SERVERS = (
+    ("master.unvanquished.net", 27950),
+    ("master2.unvanquished.net", 27950),
+)
+
+
+class MainServer:
+    def __init__(self, host, port):
+        self._host = host
+        self._port = port
+
+        self._last_error_str = None
+
+    def __str__(self):
+        return f"{self._host}:{self._port}"
+
+    def get_addresses(self):
+        logger.debug(f"Requesting server list from {self}.")
+
+        con = socket(AF_INET, SOCK_DGRAM)
+        con.settimeout(SOCKET_TIMEOUT)
+        con.connect((self._host, self._port))
+        con.send(Q_GET_SERVERS)
+        response = con.recv(
+            len(R_GET_SERVERS) + SERVER_RECORD_LEN * MAX_SERVERS_RECEIVED
+        )
+
+        if not response:
+            raise RuntimeError("No response.")
+
+        if not response.startswith(R_GET_SERVERS):
+            raise RuntimeError("Unexpected response header.")
+
+        response = response[len(R_GET_SERVERS) :]
+        num_servers = len(response) // SERVER_RECORD_LEN
+
+        addresses = []
+        for i in range(num_servers):
+            ip0, ip1, ip2, ip3, port0, port1, sep = response[
+                SERVER_RECORD_LEN * i : SERVER_RECORD_LEN * (i + 1)
+            ]
+
+            if sep != ord(RECORD_SEP):
+                raise RuntimeError(
+                    f"Faulty server list: missing separator byte."
+                )
+
+            host = f"{ip0:d}.{ip1:d}.{ip2:d}.{ip3:d}"
+            port = (port0 << 8) + port1
+
+            addresses.append((host, port))
+
+        logger.debug(f"Main server {self} sent {len(addresses)} servers.")
+
+        return addresses
+
+    def try_get_addresses(self):
+        """Attempt to get a list of game servers; default to an empty list."""
+        try:
+            return self.get_addresses()
+        except Exception as error:
+            error_str = str(error)
+
+            # Log new errors with INFO, repeated errors with DEBUG level.
+            logger.log(
+                logging.INFO
+                if error_str != self._last_error_str
+                else logging.DEBUG,
+                f"Failed to fetch servers from {self}: {error}",
+            )
+
+            self._last_error_str = error_str
+
+            return []
+
 
 class ServerList:
     @staticmethod
@@ -37,7 +113,7 @@ class ServerList:
             current_time = unix_time()
 
             if current_time - servers._last_update > servers._update_time:
-                servers.try_update_servers()
+                servers.update_servers()
 
             if current_time - servers._last_refresh > servers._refresh_time:
                 servers.refresh_servers()
@@ -48,107 +124,38 @@ class ServerList:
 
     def __init__(
         self,
-        main_address="master.unvanquished.net",
-        main_port=27950,
+        main_servers=DEFAULT_MAIN_SERVERS,
         *,
-        max_servers=2**9,
         update_time=60.0,
-        refresh_time=1.0,
+        refresh_time=1.0
     ):
-        self._host = main_address
-        self._port = main_port
-        self._max_servers = max_servers
+        self._mains = [MainServer(host, port) for host, port in main_servers]
         self._update_time = update_time
         self._refresh_time = refresh_time
 
         self._servers = set()
         self._last_update = 0
-        self._last_update_error = None
         self._last_refresh = 0
 
-    @property
-    def _main_str(self):
-        return f"{self._host}:{self._port}"
-
-    def query_addresses(self):
-        logger.debug(f"Requesting server list from {self._main_str}.")
-
-        con = socket(AF_INET, SOCK_DGRAM)
-        con.settimeout(SOCKET_TIMEOUT)
-        con.connect((self._host, self._port))
-        con.send(Q_GET_SERVERS)
-        response = con.recv(len(R_GET_SERVERS) + 7 * self._max_servers)
-
-        if not response:
-            raise RuntimeError(
-                f"Failed to query main server at {self._main_str} for servers:"
-                f" no response."
-            )
-
-        if not response.startswith(R_GET_SERVERS):
-            raise RuntimeError(
-                f"Failed to query main server at {self._main_str}:"
-                f" bad response header."
-            )
-
-        response = response[len(R_GET_SERVERS) :]
-
-        if len(response) % SERVER_RECORD_LEN:
-            raise RuntimeError(
-                f"Main server at {self._main_str} sent faulty server list:"
-                f" payload has unexpected size of {len(response)}"
-                f" (not a multiple of {SERVER_RECORD_LEN})."
-            )
-
-        num_servers = len(response) // SERVER_RECORD_LEN
-
-        for i in range(num_servers):
-            ip0, ip1, ip2, ip3, port0, port1, sep = response[
-                SERVER_RECORD_LEN * i : SERVER_RECORD_LEN * (i + 1)
-            ]
-
-            if sep != ord(RECORD_SEP):
-                raise RuntimeError(
-                    f"Main server at {self._main_str} sent faulty server list:"
-                    f" unexpected separator byte {chr(sep)}."
-                )
-
-            server_addr = f"{ip0:d}.{ip1:d}.{ip2:d}.{ip3:d}"
-            server_port = (port0 << 8) + port1
-
-            yield server_addr, server_port
+        # Prevent logging duplicate errors for each main server.
+        for main in self._mains:
+            setattr(main, "_last_error_str", None)
 
     def update_servers(self):
-        """Retrieve a server list and refresh all servers.
+        """Retrieve game server lists and refresh all known servers."""
+        if not self._mains:
+            raise RuntimeError("No main server configured.")
 
-        :raises RuntimeError:
-            If the server list could not be retrieved.
-        """
-        self._servers.update(
-            Server(host, port) for host, port in self.query_addresses()
-        )
-        self._last_update = unix_time()
-
-        self.refresh_servers()
-
-    def try_update_servers(self):
-        """Try to retrieve a server list and refresh all servers on success."""
-        try:
-            self.update_servers()
-        except Exception as error:
-            error_str = str(error)
-
-            # Log new errors with INFO, repeated errors with DEBUG level.
-            logger.log(
-                logging.INFO
-                if error_str != self._last_update_error
-                else logging.DEBUG,
-                f"Failed to fetch servers from {self._main_str}: {error}",
+        with ThreadPool(len(self._mains)) as pool:
+            addresses = sum(
+                pool.map(MainServer.try_get_addresses, self._mains), []
             )
 
-            self._last_update_error = error_str
-        else:
-            self._last_update_error = None
+        if addresses:
+            self._servers.update(Server(host, port) for host, port in addresses)
+            self._last_update = unix_time()
+
+        self.refresh_servers()
 
     def refresh_servers(self):
         """Refresh all currently known servers (failure resets status)."""
