@@ -54,7 +54,7 @@ class Server:
         return re.sub(r"\s*(\[.*?\]|\s)\s*", " ", string).strip()
 
     @staticmethod
-    def _valid_or(default=None, *, fallback=None):
+    def _valid_or(default=None, *, fallback=None, cache=False):
         """Return a default if the last request did not produce a valid config.
 
         This decorates methods of :class:`Server`. The method will be executed
@@ -69,6 +69,10 @@ class Server:
         will be run instead of the (skipped or failed) decorated method and
         whose return value is then forwarded. This fallback should not depend
         on a valid configuration being provided by the server.
+
+        If further caching is enabled, any return value forwarded in the
+        presence of a server configuration will be cached within that
+        configuration and returned immediately on a subsequent request.
         """
         assert default is None or fallback is None
 
@@ -76,16 +80,22 @@ class Server:
             @wraps(method)
             def wrapped(server, *args, **kwargs):
                 if server._config:
-                    # TODO: Add a finally clause to cache the value to be
-                    #       returned within _config?
+                    if cache and method in server._config:
+                        return server._config[method]
+
                     try:
-                        return method(server, *args, **kwargs)
+                        value = method(server, *args, **kwargs)
                     except Exception as error:
                         logger.warn(
                             f"Failed to obtain {method.__name__}"
                             f" for {server.address}: {error}"
                         )
-                        return fallback(server) if fallback else default
+                        value = fallback(server) if fallback else default
+
+                    if cache:
+                        server._config[method] = value
+
+                    return value
                 else:
                     return fallback(server) if fallback else default
 
@@ -239,7 +249,7 @@ class Server:
         return self._config["mapname"]
 
     @property
-    @_valid_or((0,) * 5)
+    @_valid_or((0,) * 5, cache=True)
     def player_stats(self):
         """Reports number of players (S/A/H) and bots (A/H) as five numbers."""
         assert self._config
