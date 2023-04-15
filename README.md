@@ -5,7 +5,7 @@
 [![black badge](https://img.shields.io/badge/code%20style-black-black?logo=python&logoColor=white)](https://github.com/psf/black)
 
 <p align="center">
-  <img src="package/unvtray.png" />
+  <img src="package/icons/128x128/unvtray.png" />
 </p>
 
 A minimalistic [Unvanquished](https://unvanquished.net/) server browser that
@@ -115,6 +115,6 @@ window managers.
   under [GPLv3 or later](LICENSE.txt).
 
 - The original [Unvanquished icon](unvtray/assets/unvanquished.png) and the
-  derived [example tray icon](example.png) are licensed under [CC BY-SA
-  2.5](https://creativecommons.org/licenses/by-sa/2.5/); you may attribute both
+  derived [unvtray icons](package/icons) are licensed under [CC BY-SA
+  2.5](https://creativecommons.org/licenses/by-sa/2.5/); you may attribute all
   to "Unvanquished Development."
