@@ -23,34 +23,44 @@ from pystray import Icon, Menu, MenuItem
 from .launch import launch
 
 ASSET_DIR = Path(__file__).parent / "assets"
+ICON_FILE = ASSET_DIR / "unvanquished.png"
+FONT_FILE = ASSET_DIR / "FreeMonoBold.otf"
 
 HIGH_PLAYER_COUNT = 6
 
 
 @lru_cache()
+def _load_base_icon(size):
+    return Image.open(str(ICON_FILE)).resize((size, size))
+
+
+@lru_cache()
+def _load_font(size):
+    return ImageFont.truetype(str(FONT_FILE), size=size)
+
+
+@lru_cache()
 def _make_icon(
-    text="",
     *,
+    size=64,
+    text="",
     text_color="lightgray",
-    bg_color="#555",
-    border_color="#222",
     text_size=44 / 64,
     text_hori_margin=1 / 64,
     text_vert_margin=-2 / 64,
-    border_width=1 / 64,
-    icon_file=str(ASSET_DIR / "unvanquished.png"),
-    font_file=str(ASSET_DIR / "FreeMonoBold.otf"),
+    bg_color="#555",
+    border_color="#222",
+    border_width=1 / 64
 ):
-    icon = Image.open(icon_file)
-    assert icon.size[0] == icon.size[1], "Icon image must be square."
+    icon = _load_base_icon(size).copy()
 
     if text:
         s = icon.size[0]
-        h = text_hori_margin * s
-        v = text_vert_margin * s
-        b = border_width * s
+        h = int(text_hori_margin * s)
+        v = int(text_vert_margin * s)
+        b = int(border_width * s)
         th = int(text_size * s)  # text height
-        font = ImageFont.truetype(font_file, size=th)
+        font = _load_font(th)
         tw = font.getlength(text) + 2 * h  # text width
 
         canvas = ImageDraw.Draw(icon)
@@ -73,8 +83,8 @@ def _make_icon(
     return icon
 
 
-def make_icon(players=None):
-    icon_data = dict(text_color="#f9fcee")
+def make_icon(players=None, size=64):
+    icon_data = dict(size=size, text_color="#f9fcee")
 
     if players is None:  # No data yet.
         pass
