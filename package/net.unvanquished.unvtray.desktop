@@ -2,7 +2,7 @@
 Version=1.5
 Name=Unvanquished Tray
 Comment=Minimalistic Unvanquished server browser that runs in your system tray
-Icon=unvtray
+Icon=net.unvanquished.unvtray
 Terminal=false
 Type=Application
 Exec=unvtray

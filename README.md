@@ -5,7 +5,7 @@
 [![black badge](https://img.shields.io/badge/code%20style-black-black?logo=python&logoColor=white)](https://github.com/psf/black)
 
 <p align="center">
-  <img src="package/icons/128x128/unvtray.png" />
+  <img src="package/icons/128x128/net.unvanquished.unvtray.png" />
 </p>
 
 A minimalistic [Unvanquished](https://unvanquished.net/) server browser that

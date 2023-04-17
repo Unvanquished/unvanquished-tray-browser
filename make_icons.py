@@ -22,7 +22,7 @@ from pathlib import Path
 import unvtray
 from unvtray.tray import make_icon
 
-APP_NAME = unvtray.__name__  # pyright: ignore
+APP_NAME = "net.unvanquished.unvtray"
 
 APP_ICON_DIR = Path("package") / "icons"
 APP_ICON_SIZES = tuple(2**i for i in range(5, 10))
